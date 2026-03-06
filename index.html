@@ -2,47 +2,74 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚴</text></svg>" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>LNDN Meets</title>
-    <!-- Include premium font for typography -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/style.css">
+    <title>London Velo // Premium Cycle Routes</title>
+    
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="./style.css">
   </head>
   <body>
     <div id="app">
       <div id="map"></div>
       
-      <!-- Premium Glassmorphism UI Panel -->
+      <!-- Premium Glassmorphism UI Overlay -->
       <div id="ui-layer">
-        <header style="display: flex; justify-content: space-between; align-items: flex-start;">
-          <div>
-            <h1>LNDN Meets</h1>
-            <p>Curated spots equipped with parking for the car community.</p>
-          </div>
-          <div id="auth-section">
-            <button id="login-btn" class="filter-btn" style="background: var(--accent-color); color: #000; border-color: var(--accent-color);">Sign In</button>
-            <div id="user-info" class="hidden" style="font-size: 0.75rem;">
-              <span id="user-name"></span>
-              <button id="logout-btn" class="filter-btn" style="padding: 3px 8px; margin-top: 4px;">Log Out</button>
-            </div>
-          </div>
-        </header>
         
+        <header>
+          <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+            <div class="logo">London <span>Velo.</span></div>
+            <div id="user-info" class="hidden" style="font-size: 0.9rem; font-weight: 500; color: var(--text-secondary);">
+              <span id="user-name" style="margin-right: 12px;"></span>
+              <button id="logout-btn" style="background:none; border:none; color: var(--accent-color); cursor: pointer; font-weight: 600;">Sign Out</button>
+            </div>
+            <button id="login-btn" class="glass-btn primary" style="padding: 6px 14px; font-size: 0.85rem;">
+              Sign in with Google
+            </button>
+          </div>
+          <p class="subtitle">Curated Routes & Bakeries</p>
+        </header>
+
         <!-- Premium Toast Notification Area -->
         <div id="toast-container" class="hidden"></div>
         
+        <!-- Live Weather Widget -->
+        <div id="weather-widget" class="glass-panel" style="margin-bottom: 20px; display: flex; align-items: center; justify-content: space-around; padding: 12px;">
+          <div style="text-align: center;">
+            <div id="weather-temp" style="font-size: 1.4rem; font-weight: 700;">--°C</div>
+            <div style="font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase;">Temp</div>
+          </div>
+          <div style="width: 1px; height: 30px; background: rgba(0,0,0,0.1);"></div>
+          <div style="text-align: center;">
+            <div id="weather-wind" style="font-size: 1.4rem; font-weight: 700;">--</div>
+            <div style="font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase;">Wind (km/h)</div>
+          </div>
+          <div style="width: 1px; height: 30px; background: rgba(0,0,0,0.1);"></div>
+          <div style="text-align: center;">
+            <div id="weather-rain" style="font-size: 1.4rem; font-weight: 700;">--%</div>
+            <div style="font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase;">Rain Prob</div>
+          </div>
+        </div>
+
         <div class="filters">
-          <button class="filter-btn active" data-type="all">All Spots</button>
+          <button class="filter-btn active" data-type="all">All</button>
+          <button class="filter-btn" data-type="route">Routes</button>
           <button class="filter-btn" data-type="cafe">Cafes</button>
-          <button class="filter-btn" data-type="pub">Pubs</button>
+          <button class="filter-btn" data-type="bakery">Bakeries</button>
         </div>
-        
+
+        <!-- Dynamic Content Area -->
         <div id="spot-details" class="glass-panel hidden">
-          <!-- Dynamic Content Rendered via JS -->
+          <!-- Populated by JS -->
         </div>
+
       </div>
     </div>
     <script type="module" src="/main.js"></script>

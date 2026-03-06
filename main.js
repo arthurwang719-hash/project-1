@@ -1,8 +1,11 @@
 import L from 'leaflet';
-import { locations } from './src/data/locations.js';
+import { routes } from './src/data/routes.js';
 import { auth, provider, db } from './src/firebase/config.js';
 import { signInWithPopup, signOut, onAuthStateChanged } from "firebase/auth";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
+
+// --- Custom Theme Variables --- //
+const BRAND_COLOR = '#fc4c02';
 
 // --- Auth State UI Management --- //
 let currentUser = null;
@@ -16,9 +19,7 @@ onAuthStateChanged(auth, (user) => {
     currentUser = user;
     loginBtn.classList.add('hidden');
     userInfoDiv.classList.remove('hidden');
-    
-    // Safely handle display names for CJK characters or missing names
-    const displayName = user.displayName || (user.email ? user.email.split('@')[0] : 'Driver');
+    const displayName = user.displayName || (user.email ? user.email.split('@')[0] : 'Cyclist');
     userNameSpan.textContent = `Hello, ${displayName.split(' ')[0]}`;
   } else {
     currentUser = null;
@@ -29,48 +30,42 @@ onAuthStateChanged(auth, (user) => {
 });
 
 const toastContainer = document.getElementById('toast-container');
-
 function showToast(message, isSuccess = false) {
   toastContainer.textContent = message;
   toastContainer.className = isSuccess ? 'success' : '';
   toastContainer.classList.remove('hidden');
-  setTimeout(() => {
-    toastContainer.classList.add('hidden');
-  }, 4000);
+  setTimeout(() => toastContainer.classList.add('hidden'), 4000);
 }
 
 loginBtn.addEventListener('click', async () => {
   try {
     await signInWithPopup(auth, provider);
   } catch (error) {
-    if (error.code === 'auth/invalid-api-key') {
-      showToast('API Key missing. Please update src/firebase/config.js');
-    } else if (error.code === 'auth/unauthorized-domain') {
-      showToast('Domain not authorized. Please add this URL in Firebase Console settings.');
-    } else if (error.message) {
-      showToast(`Login Failed: ${error.message}`);
-    } else {
-      showToast('Login Failed. Please check console for details.');
-      console.error(error);
-    }
+    showToast(`Login Failed: ${error.message}`);
   }
 });
 
-logoutBtn.addEventListener('click', () => {
-  signOut(auth);
-});
+logoutBtn.addEventListener('click', () => signOut(auth));
 
-// Central London Coordinates
+// --- Open-Meteo Weather API Integration --- //
+async function fetchWeather() {
+  try {
+    // Coordinates for Central London
+    const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=51.5085&longitude=-0.1257&current=temperature_2m,wind_speed_10m,precipitation_probability');
+    const data = await res.json();
+    document.getElementById('weather-temp').textContent = `${Math.round(data.current.temperature_2m)}°C`;
+    document.getElementById('weather-wind').textContent = Math.round(data.current.wind_speed_10m);
+    document.getElementById('weather-rain').textContent = `${data.current.precipitation_probability}%`;
+  } catch (err) {
+    console.warn("Weather fetch failed:", err);
+  }
+}
+fetchWeather();
+
+// --- Map Initialization --- //
 const LONDON_CENTER = [51.5074, -0.1278];
+const map = L.map('map', { center: LONDON_CENTER, zoom: 11, zoomControl: false });
 
-// Initialize Map
-const map = L.map('map', {
-  center: LONDON_CENTER,
-  zoom: 11,
-  zoomControl: false
-});
-
-// Add Premium Vibrant CartoDB Tiles (Voyager) for a modern, beautiful aesthetic
 L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
   attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
   subdomains: 'abcd',
@@ -79,139 +74,158 @@ L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r
 
 L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-const markers = [];
+// --- Routes & Data Rendering --- //
+const mapLayers = [];
 const spotDetailsContainer = document.getElementById('spot-details');
 const filterBtns = document.querySelectorAll('.filter-btn');
 
-function renderMarkers(filterType = 'all') {
-  markers.forEach(marker => map.removeLayer(marker));
-  markers.length = 0;
+function renderData(filterType = 'all') {
+  // Clear map layers
+  mapLayers.forEach(layer => map.removeLayer(layer));
+  mapLayers.length = 0;
 
-  locations.forEach(spot => {
-    if (filterType !== 'all' && spot.type !== filterType) return;
+  routes.forEach(route => {
+    // 1. Render Route Polyline (if filter is All or Route)
+    if (filterType === 'all' || filterType === 'route') {
+      const polyline = L.polyline(route.path, {
+        color: BRAND_COLOR,
+        weight: 5,
+        opacity: 0.8,
+        lineCap: 'round',
+        lineJoin: 'round'
+      }).addTo(map);
+      
+      polyline.on('click', () => showDetails(route, 'route'));
+      mapLayers.push(polyline);
+    }
 
-    const iconHtml = `<div class="marker-pin ${spot.type}"></div>`;
-    const customIcon = L.divIcon({
-      className: 'custom-marker',
-      html: iconHtml,
-      iconSize: [28, 28],
-      iconAnchor: [14, 14]
+    // 2. Render POIs (if filter is All, Cafe, or Bakery)
+    route.pois.forEach(poi => {
+      if (filterType === 'all' || filterType === poi.type) {
+        const iconHtml = `<div class="marker-pin" data-emoji="${poi.emoji}" style="background: ${poi.type === 'bakery' ? '#e1b12c' : '#44bd32'}"></div>`;
+        const customIcon = L.divIcon({ className: 'custom-marker', html: iconHtml, iconSize: [34, 34], iconAnchor: [17, 34] });
+        
+        const marker = L.marker(poi.coordinates, { icon: customIcon }).addTo(map);
+        marker.on('click', () => showDetails(poi, 'poi', route.id));
+        mapLayers.push(marker);
+      }
     });
-
-    const marker = L.marker(spot.coordinates, { icon: customIcon }).addTo(map);
-
-    marker.on('click', () => {
-      showSpotDetails(spot);
-    });
-
-    markers.push(marker);
   });
+
+  // Fit bounds to all rendered layers if any exist
+  if (mapLayers.length > 0) {
+    const group = L.featureGroup(mapLayers);
+    map.fitBounds(group.getBounds(), { padding: [50, 50], maxZoom: 14 });
+  }
 }
 
-function showSpotDetails(spot) {
-  map.panTo(spot.coordinates, { animate: true, duration: 0.5 });
+function showDetails(item, itemType, parentRouteId = null) {
+  const isRoute = itemType === 'route';
   
-  const typeColor = spot.type === 'pub' ? 'rgba(255,71,87,0.1)' : 'rgba(0,85,255,0.1)';
-  const textColor = spot.type === 'pub' ? '#ff4757' : '#0055ff';
+  // Pan to center of item
+  const centerCoord = isRoute ? item.path[Math.floor(item.path.length / 2)] : item.coordinates;
+  map.flyTo(centerCoord, 14, { animate: true, duration: 1.5 });
+  
+  const typeLabel = isRoute ? '🚴 Route' : (item.type === 'bakery' ? '🥐 Bakery' : '☕ Cafe');
+  const typeBg = isRoute ? 'rgba(252, 76, 2, 0.1)' : 'rgba(46, 213, 115, 0.1)';
+  const typeColor = isRoute ? BRAND_COLOR : '#2ed573';
+
+  // Specific HTML blocks
+  const metricsHtml = isRoute ? `
+    <div class="metrics-row">
+      <div class="metric"><div class="metric-val">${item.distance}</div><div class="metric-label">Distance</div></div>
+      <div class="metric"><div class="metric-val">${item.elevation}</div><div class="metric-label">Elevation</div></div>
+      <div class="metric"><div class="metric-val">${item.difficulty}</div><div class="metric-label">Difficulty</div></div>
+    </div>
+    <div style="font-style: italic; color: var(--text-secondary); margin-bottom: 12px;">"${item.description}"</div>
+  ` : `
+    <div style="width: 100%; height: 160px; border-radius: 12px; overflow: hidden; margin-top: 12px; margin-bottom: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+      <img src="${item.image}" style="width: 100%; height: 100%; object-fit: cover;" />
+    </div>
+    <div style="font-weight: 500;">📍 ${item.address}</div>
+    <div style="margin-top: 8px; color: var(--text-secondary); font-style: italic;">"${item.vibe}"</div>
+  `;
 
   spotDetailsContainer.innerHTML = `
-    <div style="border-bottom: 1px solid rgba(0,0,0,0.08); padding-bottom: 12px; margin-bottom: 12px;">
-      <div class="spot-title">${spot.name}</div>
-      <div class="spot-type" style="background: ${typeColor}; color: ${textColor};">
-        ${spot.type}
-      </div>
+    <div style="border-bottom: 1px solid rgba(0,0,0,0.08); padding-bottom: 12px; margin-bottom: 4px;">
+      <div class="spot-title">${item.name}</div>
+      <div class="spot-type" style="background: ${typeBg}; color: ${typeColor};">${typeLabel}</div>
     </div>
     <div class="spot-info">
-      <div style="width: 100%; height: 160px; border-radius: 12px; overflow: hidden; margin-bottom: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
-        <!-- Using high quality curated unspash architecture/car matches to prevent 404s -->
-        <img src="${spot.image}" alt="${spot.name}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='https://images.unsplash.com/photo-1511527661048-7fe73d85e9a4?auto=format&fit=crop&q=80&w=400&h=250'" />
-      </div>
-      <div><strong>Address:</strong> ${spot.address}</div>
-      <div><strong>Parking:</strong> ${spot.parking}</div>
-      <div style="margin-top: 4px; border-left: 3px solid var(--accent-color); padding-left: 10px; font-style: italic; color: var(--text-secondary); background: rgba(0,0,0,0.02); padding-top: 6px; padding-bottom: 6px;">
-        "${spot.vibe}"
-      </div>
-      <button id="checkin-btn" class="filter-btn" style="margin-top: 14px; width: 100%; background: #2ed573; color: #fff; border: none; font-size: 0.9rem; padding: 10px;">
-        Verify Location & Check-in
+      ${metricsHtml}
+      <button id="checkin-btn" class="filter-btn" style="margin-top: 14px; width: 100%; background: var(--accent-color); color: #fff; border: none; font-size: 0.95rem; padding: 12px;">
+        GPS Check-In (${isRoute ? 'Start Route' : 'Arrived'})
       </button>
     </div>
   `;
   
   if (spotDetailsContainer.classList.contains('hidden')) {
     spotDetailsContainer.classList.remove('hidden');
-    spotDetailsContainer.style.animation = 'none';
-    spotDetailsContainer.offsetHeight;
-    spotDetailsContainer.style.animation = null; 
   }
 
-  // Handle Check-in logic with HTML5 Geolocation validation
+  // Geolocation Check-in Logic
   document.getElementById('checkin-btn').addEventListener('click', async () => {
-    if (!currentUser) {
-      showToast("Please Sign In with Google first to check into a spot!");
-      return;
-    }
+    if (!currentUser) return showToast("Please Sign In with Google first!");
+    if (!navigator.geolocation) return showToast("Geolocation unsupported by browser.");
     
-    if (!navigator.geolocation) {
-      showToast("Geolocation is not supported by your browser!");
-      return;
-    }
-    
-    showToast("Verifying your GPS location...", true);
+    showToast("Verifying GPS location...", true);
     document.getElementById('checkin-btn').textContent = "Locating...";
     
     navigator.geolocation.getCurrentPosition(async (position) => {
       const userLatLng = L.latLng(position.coords.latitude, position.coords.longitude);
-      const spotLatLng = L.latLng(spot.coordinates[0], spot.coordinates[1]);
-      const distanceMetres = userLatLng.distanceTo(spotLatLng);
       
-      // Calculate miles for London display, enforce 500 meter check-in radius
-      const maxDistance = 500;
-      if (distanceMetres > maxDistance) {
-        document.getElementById('checkin-btn').textContent = "Verify Location & Check-in";
-        showToast(`Locate Failed: You are ${(distanceMetres/1609.34).toFixed(1)} miles away. Must be within 500m.`);
-        return;
+      // Calculate minimum distance to either the route or the exact POI point
+      let minDistance = Infinity;
+      if (isRoute) {
+        // Distance to the closest point on the route
+        item.path.forEach(coord => {
+          const pt = L.latLng(coord[0], coord[1]);
+          const d = userLatLng.distanceTo(pt);
+          if (d < minDistance) minDistance = d;
+        });
+      } else {
+        const spotLatLng = L.latLng(item.coordinates[0], item.coordinates[1]);
+        minDistance = userLatLng.distanceTo(spotLatLng);
+      }
+      
+      // Enforce 1000m radius for routes, 500m for cafes
+      const maxDistance = isRoute ? 1000 : 500;
+      
+      if (minDistance > maxDistance) {
+        document.getElementById('checkin-btn').textContent = "Check-In";
+        return showToast(`Locate Failed: You are ${(minDistance/1609.34).toFixed(1)} miles away.`);
       }
       
       try {
-        const checkinRef = doc(db, 'checkins', `${spot.id}_${currentUser.uid}`);
-        await setDoc(checkinRef, {
-          spotId: spot.id,
-          spotName: spot.name,
+        const dbId = `${item.id}_${currentUser.uid}`;
+        await setDoc(doc(db, 'checkins', dbId), {
+          itemId: item.id,
+          itemName: item.name,
+          type: itemType,
           userId: currentUser.uid,
           userName: currentUser.displayName,
           timestamp: serverTimestamp()
         });
         document.getElementById('checkin-btn').textContent = "Checked In ✅";
-        document.getElementById('checkin-btn').style.background = "#fff";
-        document.getElementById('checkin-btn').style.color = "#2ed573";
-        showToast(`Success! You securely checked into ${spot.name}`, true);
+        document.getElementById('checkin-btn').style.background = "#2ed573";
+        showToast(`Success! You checked into ${item.name}`, true);
       } catch (error) {
-        document.getElementById('checkin-btn').textContent = "Verify Location & Check-in";
-        if (error.code === 'permission-denied' || error.message.includes('API key not valid')) {
-          showToast('Firebase DB missing permission. Update rules in console.');
-        } else {
-          showToast("Error checking in: " + error.message);
-        }
+        document.getElementById('checkin-btn').textContent = "Check-In";
+        showToast("Error checking in: " + error.message);
       }
-    }, (geoError) => {
-      document.getElementById('checkin-btn').textContent = "Verify Location & Check-in";
-      showToast('GPS Error: Please enable Location Services ' + geoError.message);
-    }, {
-      enableHighAccuracy: true,
-      timeout: 10000,
-      maximumAge: 0
     });
   });
 }
 
+// Event Listeners for Filters
 filterBtns.forEach(btn => {
   btn.addEventListener('click', (e) => {
     filterBtns.forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-    const type = btn.getAttribute('data-type');
-    renderMarkers(type);
+    renderData(btn.getAttribute('data-type'));
     spotDetailsContainer.classList.add('hidden');
   });
 });
 
-renderMarkers('all');
+// Initial Render
+renderData('all');

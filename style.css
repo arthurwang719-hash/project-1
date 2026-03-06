@@ -1,34 +1,35 @@
+/* Re-writing style.css for London Velo (Strava Inspired Theme) */
 :root {
-  --glsp-bg: rgba(255, 255, 255, 0.85);
-  --glsp-border: rgba(255, 255, 255, 0.4);
-  --text-primary: #1a1a1c;
-  --text-secondary: #5a5a60;
-  --accent-color: #0055ff;
-  --font-family: 'Inter', system-ui, -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --bg-color: #ffffff;
+  --panel-bg: rgba(255, 255, 255, 0.85);
+  --accent-color: #fc4c02; /* Strava Orange */
+  --text-primary: #1a1a1a;
+  --text-secondary: #666666;
+  --glass-border: rgba(0, 0, 0, 0.08);
+  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
 }
 
 * {
-  box-sizing: border-box;
   margin: 0;
   padding: 0;
+  box-sizing: border-box;
+  font-family: var(--font-family);
 }
 
 body, html {
-  font-family: var(--font-family);
-  background-color: #f4f4f8;
-  color: var(--text-primary);
-  width: 100vw;
-  height: 100vh;
+  width: 100%;
+  height: 100%;
   overflow: hidden;
+  background-color: var(--bg-color);
+  color: var(--text-primary);
 }
 
 #app {
   position: relative;
-  width: 100%;
-  height: 100%;
+  width: 100vw;
+  height: 100vh;
 }
 
-/* Map Container */
 #map {
   position: absolute;
   top: 0;
@@ -36,227 +37,242 @@ body, html {
   width: 100%;
   height: 100%;
   z-index: 1;
-  background-color: #1a1a1c;
 }
 
-/* UI Overlay Layer - Glassmorphism */
+/* UI Overlay */
 #ui-layer {
   position: absolute;
-  top: 24px;
-  left: 24px;
-  z-index: 1000;
+  top: 20px;
+  left: 20px;
   width: 380px;
-  max-height: calc(100vh - 48px);
+  max-height: calc(100vh - 40px);
+  z-index: 1000;
   display: flex;
   flex-direction: column;
   gap: 20px;
+  pointer-events: none; /* Let clicks pass through map where empty */
+  overflow-y: auto;
+}
+
+/* Make internal elements clickable */
+#ui-layer > * {
+  pointer-events: auto; 
+}
+
+/* Scrollbar styling for webkit */
+#ui-layer::-webkit-scrollbar {
+  width: 6px;
+}
+#ui-layer::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,0.1);
+  border-radius: 4px;
+}
+
+header {
+  background: var(--panel-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  padding: 24px;
+  border-radius: 20px;
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 10px 40px rgba(0,0,0,0.05);
+}
+
+.logo {
+  font-size: 1.8rem;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+
+.logo span {
+  color: var(--accent-color);
+}
+
+.subtitle {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  margin-top: 8px;
+  font-weight: 500;
 }
 
 .glass-panel {
-  background: var(--glsp-bg);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border: 1px solid var(--glsp-border);
+  background: var(--panel-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  padding: 24px;
   border-radius: 20px;
-  padding: 28px;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 10px 40px rgba(0,0,0,0.05);
+  animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-header h1 {
-  font-size: 1.8rem;
-  font-weight: 800;
-  letter-spacing: -0.03em;
-  margin-bottom: 6px;
-  background: linear-gradient(135deg, #1a1a1c, #4a4a50);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-header p {
-  color: var(--text-secondary);
-  font-size: 0.9rem;
-  line-height: 1.5;
-}
-
-/* Toast Notifications */
-#toast-container {
-  background: #ff4757;
-  color: white;
-  padding: 12px 16px;
-  border-radius: 8px;
-  font-size: 0.85rem;
-  font-weight: 500;
-  box-shadow: 0 4px 12px rgba(255, 71, 87, 0.3);
-  animation: fadeInDown 0.3s ease;
-  margin-bottom: 10px;
-}
-#toast-container.hidden { display: none; }
-#toast-container.success {
-  background: #2ed573;
-  box-shadow: 0 4px 12px rgba(46, 213, 115, 0.3);
-}
-
-@keyframes fadeInDown {
-  from { opacity: 0; transform: translateY(-10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* Filters */
 .filters {
   display: flex;
   gap: 10px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
-  padding-bottom: 18px;
+  flex-wrap: wrap;
 }
 
 .filter-btn {
-  background: #fff;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  color: var(--text-secondary);
-  padding: 8px 16px;
-  border-radius: 24px;
-  font-size: 0.8rem;
+  background: var(--panel-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  color: var(--text-primary);
+  padding: 10px 18px;
+  border-radius: 30px;
   font-weight: 600;
+  font-size: 0.9rem;
   cursor: pointer;
-  transition: all 0.25s ease;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.03);
 }
 
 .filter-btn:hover {
-  background: #f8f9fa;
-  color: var(--text-primary);
-  transform: translateY(-1px);
+  background: rgba(0,0,0,0.03);
+  transform: translateY(-2px);
 }
 
 .filter-btn.active {
   background: var(--accent-color);
   color: #fff;
   border-color: var(--accent-color);
-  box-shadow: 0 4px 12px rgba(0, 85, 255, 0.3);
-}
-
-#login-btn { color: #fff; }
-
-#spot-details {
-  animation: fadeIn 0.4s ease forwards;
-}
-
-#spot-details.hidden {
-  display: none;
+  box-shadow: 0 6px 16px rgba(252, 76, 2, 0.3);
 }
 
 .spot-title {
   font-size: 1.4rem;
   font-weight: 700;
   margin-bottom: 6px;
-  color: var(--text-primary);
+  line-height: 1.2;
 }
 
 .spot-type {
   display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
   font-size: 0.75rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  padding: 4px 10px;
-  border-radius: 6px;
-  margin-bottom: 16px;
+  letter-spacing: 0.5px;
 }
 
 .spot-info {
-  font-size: 0.9rem;
+  margin-top: 16px;
+  font-size: 0.95rem;
   color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* Map Metrics Row for Routes */
+.metrics-row {
   display: flex;
-  flex-direction: column;
-  gap: 10px;
-  line-height: 1.5;
+  justify-content: space-between;
+  margin: 12px 0;
+  padding: 12px 0;
+  border-top: 1px solid rgba(0,0,0,0.08);
+  border-bottom: 1px solid rgba(0,0,0,0.08);
 }
-
-.spot-info strong {
+.metric {
+  text-align: center;
+}
+.metric-val {
+  font-weight: 800;
   color: var(--text-primary);
-  font-weight: 600;
+  font-size: 1.1rem;
+}
+.metric-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
+/* Map Markers */
 .custom-marker {
   background: transparent;
   border: none;
 }
-
 .marker-pin {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: #fff;
-  border: 3px solid var(--accent-color);
-  box-shadow: 0 4px 12px rgba(0, 85, 255, 0.4);
+  width: 34px;
+  height: 34px;
+  border-radius: 50% 50% 50% 0;
+  background: var(--accent-color);
+  position: absolute;
+  transform: rotate(-45deg);
+  left: 50%;
+  top: 50%;
+  margin: -17px 0 0 -17px;
+  box-shadow: 2px 2px 8px rgba(0,0,0,0.3);
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  cursor: pointer;
+}
+.marker-pin::after {
+  content: attr(data-emoji);
+  transform: rotate(45deg);
+  font-size: 16px;
+  line-height: 1;
 }
 
-.marker-pin:hover {
-  transform: scale(1.2) translateY(-4px);
-  box-shadow: 0 8px 16px rgba(0, 85, 255, 0.6);
+/* Toast Notifications */
+#toast-container {
+  background: var(--text-primary);
+  color: white;
+  padding: 14px 20px;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  animation: fadeInDown 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  align-items: center;
 }
+#toast-container.success {
+  background: #2ed573;
+}
+#toast-container.hidden { display: none; }
 
-.marker-pin.pub {
-  border-color: #ff4757;
-  box-shadow: 0 4px 12px rgba(255, 71, 87, 0.4);
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
 }
-
-.marker-pin.pub:hover {
-  box-shadow: 0 8px 16px rgba(255, 71, 87, 0.6);
-}
-
-/* Leaflet dark mode tweaks */
-.leaflet-control-zoom a {
-  background: var(--glsp-bg) !important;
-  color: var(--text-primary) !important;
-  border: 1px solid var(--glsp-border) !important;
-  backdrop-filter: blur(4px);
-}
-.leaflet-bar {
-  border: none !important;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.5) !important;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(5px); }
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Custom Scrollbar for Glass Panel */
-.glass-panel::-webkit-scrollbar {
-  width: 6px;
-}
-.glass-panel::-webkit-scrollbar-track {
-  background: transparent;
-}
-.glass-panel::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 4px;
-}
-
-/* Mobile Responsive - Bottom Sheet */
+/* Responsive Mobile Bottom Sheet */
 @media (max-width: 768px) {
   #ui-layer {
     top: auto;
     bottom: 0;
     left: 0;
-    width: 100%;
-    max-height: 55vh;
+    width: 100vw;
     border-radius: 24px 24px 0 0;
-    border-bottom: none;
-    border-left: none;
-    border-right: none;
-    padding: 24px 20px;
-    overflow-y: auto;
+    max-height: 85vh;
+    padding: 20px;
+    background: var(--panel-bg);
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
+    box-shadow: 0 -10px 40px rgba(0,0,0,0.1);
+    gap: 15px;
   }
   
-  .leaflet-control-zoom {
-    display: none !important; /* Hide native controls on mobile for a cleaner UI */
+  header, .glass-panel, .filter-btn {
+    box-shadow: none;
+    background: transparent;
+    border: none;
+    padding: 5px 0;
+    border-radius: 0;
+  }
+  /* re-add borders specifically for sections inside bottom sheet */
+  .glass-panel { padding: 15px 0; border-top: 1px solid rgba(0,0,0,0.05); animation: none; }
+  .filter-btn {
+    border: 1px solid rgba(0,0,0,0.1);
+    border-radius: 20px;
+    padding: 8px 16px;
   }
 }
