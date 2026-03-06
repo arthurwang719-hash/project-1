@@ -16,7 +16,10 @@ onAuthStateChanged(auth, (user) => {
     currentUser = user;
     loginBtn.classList.add('hidden');
     userInfoDiv.classList.remove('hidden');
-    userNameSpan.textContent = `Hello, \${user.displayName.split(' ')[0]}`;
+    
+    // Safely handle display names for CJK characters or missing names
+    const displayName = user.displayName || (user.email ? user.email.split('@')[0] : 'Driver');
+    userNameSpan.textContent = `Hello, \${displayName.split(' ')[0]}`;
   } else {
     currentUser = null;
     loginBtn.classList.remove('hidden');
@@ -51,8 +54,8 @@ const map = L.map('map', {
   zoomControl: false
 });
 
-// Add Premium Light/Grey CartoDB Tiles (Positron)
-L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+// Add Premium Dark CartoDB Tiles (Dark Matter) for a high-end feel
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
   attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
   subdomains: 'abcd',
   maxZoom: 20
