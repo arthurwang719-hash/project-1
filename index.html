@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>London Car Meets - Premium Map</title>
+    <!-- Inter Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+    <link rel="stylesheet" href="./style.css">
+  </head>
+  <body>
+    <div id="app">
+      <!-- UI Overlay Area -->
+      <div id="ui-layer" class="glass-panel">
+        <header style="display: flex; justify-content: space-between; align-items: flex-start;">
+          <div>
+            <h1>LNDN Meets</h1>
+            <p>Curated spots equipped with parking for the car community.</p>
+          </div>
+          <div id="auth-section">
+            <button id="login-btn" class="filter-btn" style="background: var(--accent-color); color: #000; border-color: var(--accent-color);">Sign In</button>
+            <div id="user-info" class="hidden" style="font-size: 0.75rem;">
+              <span id="user-name"></span>
+              <button id="logout-btn" class="filter-btn" style="padding: 3px 8px; margin-top: 4px;">Log Out</button>
+            </div>
+          </div>
+        </header>
+        
+        <div class="filters">
+          <button class="filter-btn active" data-type="all">All Spots</button>
+          <button class="filter-btn" data-type="cafe">Cafes</button>
+          <button class="filter-btn" data-type="pub">Pubs</button>
+        </div>
+
+        <div id="spot-details" class="hidden">
+          <!-- Dynamic content will load here when a marker is clicked -->
+        </div>
+      </div>
+
+      <!-- Map Container -->
+      <div id="map"></div>
+    </div>
+    <script type="module" src="./main.js"></script>
+  </body>
+</html>
