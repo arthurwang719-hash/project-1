@@ -144,30 +144,63 @@ function showSpotDetails(spot) {
     spotDetailsContainer.style.animation = null; 
   }
 
-  // Handle Check-in logic
+  // Handle Check-in logic with HTML5 Geolocation validation
   document.getElementById('checkin-btn').addEventListener('click', async () => {
     if (!currentUser) {
       showToast("Please Sign In with Google first to check into a spot!");
       return;
     }
     
-    try {
-      const checkinRef = doc(db, 'checkins', `${spot.id}_${currentUser.uid}`);
-      await setDoc(checkinRef, {
-        spotId: spot.id,
-        spotName: spot.name,
-        userId: currentUser.uid,
-        userName: currentUser.displayName,
-        timestamp: serverTimestamp()
-      });
-      showToast(`Success! You checked into ${spot.name}`, true);
-    } catch (error) {
-      if (error.code === 'permission-denied' || error.message.includes('API key not valid')) {
-        showToast('Firebase DB missing permission. Update rules in console.');
-      } else {
-        showToast("Error checking in: " + error.message);
-      }
+    if (!navigator.geolocation) {
+      showToast("Geolocation is not supported by your browser!");
+      return;
     }
+    
+    showToast("Verifying your GPS location...", true);
+    document.getElementById('checkin-btn').textContent = "Locating...";
+    
+    navigator.geolocation.getCurrentPosition(async (position) => {
+      const userLatLng = L.latLng(position.coords.latitude, position.coords.longitude);
+      const spotLatLng = L.latLng(spot.coordinates[0], spot.coordinates[1]);
+      const distanceMetres = userLatLng.distanceTo(spotLatLng);
+      
+      // Calculate miles for London display, enforce 500 meter check-in radius
+      const maxDistance = 500;
+      if (distanceMetres > maxDistance) {
+        document.getElementById('checkin-btn').textContent = "Verify Location & Check-in";
+        showToast(`Locate Failed: You are ${(distanceMetres/1609.34).toFixed(1)} miles away. Must be within 500m.`);
+        return;
+      }
+      
+      try {
+        const checkinRef = doc(db, 'checkins', `${spot.id}_${currentUser.uid}`);
+        await setDoc(checkinRef, {
+          spotId: spot.id,
+          spotName: spot.name,
+          userId: currentUser.uid,
+          userName: currentUser.displayName,
+          timestamp: serverTimestamp()
+        });
+        document.getElementById('checkin-btn').textContent = "Checked In ✅";
+        document.getElementById('checkin-btn').style.background = "#fff";
+        document.getElementById('checkin-btn').style.color = "#2ed573";
+        showToast(`Success! You securely checked into ${spot.name}`, true);
+      } catch (error) {
+        document.getElementById('checkin-btn').textContent = "Verify Location & Check-in";
+        if (error.code === 'permission-denied' || error.message.includes('API key not valid')) {
+          showToast('Firebase DB missing permission. Update rules in console.');
+        } else {
+          showToast("Error checking in: " + error.message);
+        }
+      }
+    }, (geoError) => {
+      document.getElementById('checkin-btn').textContent = "Verify Location & Check-in";
+      showToast('GPS Error: Please enable Location Services ' + geoError.message);
+    }, {
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 0
+    });
   });
 }
 
