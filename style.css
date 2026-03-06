@@ -1,9 +1,9 @@
 :root {
-  --glsp-bg: rgba(18, 18, 20, 0.65);
-  --glsp-border: rgba(255, 255, 255, 0.08);
-  --text-primary: #ededed;
-  --text-secondary: #a0a0a5;
-  --accent-color: #00d2ff;
+  --glsp-bg: rgba(255, 255, 255, 0.85);
+  --glsp-border: rgba(255, 255, 255, 0.4);
+  --text-primary: #1a1a1c;
+  --text-secondary: #5a5a60;
+  --accent-color: #0055ff;
   --font-family: 'Inter', system-ui, -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
 }
 
@@ -15,7 +15,7 @@
 
 body, html {
   font-family: var(--font-family);
-  background-color: #000;
+  background-color: #f4f4f8;
   color: var(--text-primary);
   width: 100vw;
   height: 100vh;
@@ -45,7 +45,7 @@ body, html {
   top: 24px;
   left: 24px;
   z-index: 1000;
-  width: 340px;
+  width: 380px;
   max-height: calc(100vh - 48px);
   display: flex;
   flex-direction: column;
@@ -54,20 +54,20 @@ body, html {
 
 .glass-panel {
   background: var(--glsp-bg);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
   border: 1px solid var(--glsp-border);
-  border-radius: 16px;
-  padding: 24px;
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+  border-radius: 20px;
+  padding: 28px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
 }
 
 header h1 {
-  font-size: 1.5rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
+  font-size: 1.8rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
   margin-bottom: 6px;
-  background: linear-gradient(90deg, #fff, #b8b8b8);
+  background: linear-gradient(135deg, #1a1a1c, #4a4a50);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -75,44 +75,71 @@ header h1 {
 
 header p {
   color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+/* Toast Notifications */
+#toast-container {
+  background: #ff4757;
+  color: white;
+  padding: 12px 16px;
+  border-radius: 8px;
   font-size: 0.85rem;
-  line-height: 1.4;
+  font-weight: 500;
+  box-shadow: 0 4px 12px rgba(255, 71, 87, 0.3);
+  animation: fadeInDown 0.3s ease;
+  margin-bottom: 10px;
+}
+#toast-container.hidden { display: none; }
+#toast-container.success {
+  background: #2ed573;
+  box-shadow: 0 4px 12px rgba(46, 213, 115, 0.3);
+}
+
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 /* Filters */
 .filters {
   display: flex;
-  gap: 8px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  padding-bottom: 16px;
+  gap: 10px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  padding-bottom: 18px;
 }
 
 .filter-btn {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid var(--glsp-border);
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.1);
   color: var(--text-secondary);
-  padding: 6px 14px;
-  border-radius: 20px;
-  font-size: 0.75rem;
-  font-weight: 500;
+  padding: 8px 16px;
+  border-radius: 24px;
+  font-size: 0.8rem;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.25s ease;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.04);
 }
 
 .filter-btn:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: #f8f9fa;
   color: var(--text-primary);
+  transform: translateY(-1px);
 }
 
 .filter-btn.active {
   background: var(--accent-color);
-  color: #000;
+  color: #fff;
   border-color: var(--accent-color);
-  box-shadow: 0 0 12px rgba(0, 210, 255, 0.4);
+  box-shadow: 0 4px 12px rgba(0, 85, 255, 0.3);
 }
 
+#login-btn { color: #fff; }
+
 #spot-details {
-  animation: fadeIn 0.3s ease forwards;
+  animation: fadeIn 0.4s ease forwards;
 }
 
 #spot-details.hidden {
@@ -120,33 +147,35 @@ header p {
 }
 
 .spot-title {
-  font-size: 1.2rem;
-  font-weight: 600;
-  margin-bottom: 4px;
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin-bottom: 6px;
+  color: var(--text-primary);
 }
 
 .spot-type {
   display: inline-block;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  background: rgba(255, 255, 255, 0.1);
-  padding: 3px 8px;
-  border-radius: 4px;
-  margin-bottom: 12px;
+  letter-spacing: 0.06em;
+  padding: 4px 10px;
+  border-radius: 6px;
+  margin-bottom: 16px;
 }
 
 .spot-info {
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   color: var(--text-secondary);
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
+  line-height: 1.5;
 }
 
 .spot-info strong {
   color: var(--text-primary);
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .custom-marker {
@@ -155,35 +184,31 @@ header p {
 }
 
 .marker-pin {
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-  background: var(--glsp-bg);
-  backdrop-filter: blur(4px);
-  border: 2px solid var(--accent-color);
-  box-shadow: 0 0 10px rgba(0, 210, 255, 0.5);
+  background: #fff;
+  border: 3px solid var(--accent-color);
+  box-shadow: 0 4px 12px rgba(0, 85, 255, 0.4);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
-  font-weight: bold;
-  font-size: 10px;
-  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   cursor: pointer;
 }
 
 .marker-pin:hover {
-  transform: scale(1.15);
-  box-shadow: 0 0 15px rgba(0, 210, 255, 0.8);
+  transform: scale(1.2) translateY(-4px);
+  box-shadow: 0 8px 16px rgba(0, 85, 255, 0.6);
 }
 
 .marker-pin.pub {
-  border-color: #ff3366;
-  box-shadow: 0 0 10px rgba(255, 51, 102, 0.5);
+  border-color: #ff4757;
+  box-shadow: 0 4px 12px rgba(255, 71, 87, 0.4);
 }
 
 .marker-pin.pub:hover {
-  box-shadow: 0 0 15px rgba(255, 51, 102, 0.8);
+  box-shadow: 0 8px 16px rgba(255, 71, 87, 0.6);
 }
 
 /* Leaflet dark mode tweaks */

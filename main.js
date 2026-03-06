@@ -28,13 +28,29 @@ onAuthStateChanged(auth, (user) => {
   }
 });
 
+const toastContainer = document.getElementById('toast-container');
+
+function showToast(message, isSuccess = false) {
+  toastContainer.textContent = message;
+  toastContainer.className = isSuccess ? 'success' : '';
+  toastContainer.classList.remove('hidden');
+  setTimeout(() => {
+    toastContainer.classList.add('hidden');
+  }, 4000);
+}
+
 loginBtn.addEventListener('click', async () => {
   try {
     await signInWithPopup(auth, provider);
   } catch (error) {
     if (error.code === 'auth/invalid-api-key') {
-      alert('Firebase config is empty. Please replace YOUR_API_KEY in src/firebase/config.js with your real project keys!');
+      showToast('API Key missing. Please update src/firebase/config.js');
+    } else if (error.code === 'auth/unauthorized-domain') {
+      showToast('Domain not authorized. Please add this URL in Firebase Console settings.');
+    } else if (error.message) {
+      showToast(`Login Failed: \${error.message}`);
     } else {
+      showToast('Login Failed. Please check console for details.');
       console.error(error);
     }
   }
@@ -54,8 +70,8 @@ const map = L.map('map', {
   zoomControl: false
 });
 
-// Add Premium Dark CartoDB Tiles (Dark Matter) for a high-end feel
-L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+// Add Premium Vibrant CartoDB Tiles (Voyager) for a modern, beautiful aesthetic
+L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
   attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
   subdomains: 'abcd',
   maxZoom: 20
@@ -95,26 +111,27 @@ function renderMarkers(filterType = 'all') {
 function showSpotDetails(spot) {
   map.panTo(spot.coordinates, { animate: true, duration: 0.5 });
   
-  const typeColor = spot.type === 'pub' ? 'rgba(255,51,102,0.2)' : 'rgba(0,210,255,0.2)';
-  const textColor = spot.type === 'pub' ? '#ff3366' : '#00d2ff';
+  const typeColor = spot.type === 'pub' ? 'rgba(255,71,87,0.1)' : 'rgba(0,85,255,0.1)';
+  const textColor = spot.type === 'pub' ? '#ff4757' : '#0055ff';
 
   spotDetailsContainer.innerHTML = `
-    <div style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 12px; margin-bottom: 12px;">
+    <div style="border-bottom: 1px solid rgba(0,0,0,0.08); padding-bottom: 12px; margin-bottom: 12px;">
       <div class="spot-title">\${spot.name}</div>
       <div class="spot-type" style="background: \${typeColor}; color: \${textColor};">
         \${spot.type}
       </div>
     </div>
     <div class="spot-info">
-      <div style="width: 100%; height: 120px; border-radius: 8px; overflow: hidden; margin-bottom: 8px;">
-        <img src="\${spot.image}" alt="\${spot.name}" style="width: 100%; height: 100%; object-fit: cover;" />
+      <div style="width: 100%; height: 160px; border-radius: 12px; overflow: hidden; margin-bottom: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+        <!-- Using high quality curated unspash architecture/car matches to prevent 404s -->
+        <img src="\${spot.image}" alt="\${spot.name}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='https://images.unsplash.com/photo-1511527661048-7fe73d85e9a4?auto=format&fit=crop&q=80&w=400&h=250'" />
       </div>
       <div><strong>Address:</strong> \${spot.address}</div>
       <div><strong>Parking:</strong> \${spot.parking}</div>
-      <div style="margin-top: 4px; border-left: 2px solid var(--accent-color); padding-left: 8px; font-style: italic; color: #fff;">
+      <div style="margin-top: 4px; border-left: 3px solid var(--accent-color); padding-left: 10px; font-style: italic; color: var(--text-secondary); background: rgba(0,0,0,0.02); padding-top: 6px; padding-bottom: 6px;">
         "\${spot.vibe}"
       </div>
-      <button id="checkin-btn" class="filter-btn" style="margin-top: 10px; width: 100%; background: rgba(0,255,100,0.1); border-color: #00ff64; color: #00ff64;">
+      <button id="checkin-btn" class="filter-btn" style="margin-top: 14px; width: 100%; background: #2ed573; color: #fff; border: none; font-size: 0.9rem; padding: 10px;">
         Verify Location & Check-in
       </button>
     </div>
@@ -130,12 +147,11 @@ function showSpotDetails(spot) {
   // Handle Check-in logic
   document.getElementById('checkin-btn').addEventListener('click', async () => {
     if (!currentUser) {
-      alert("Please Sign In with Google first to check into a spot!");
+      showToast("Please Sign In with Google first to check into a spot!");
       return;
     }
     
     try {
-      // Create a document in Firestore under /checkins/{spotId_userId}
       const checkinRef = doc(db, 'checkins', `\${spot.id}_\${currentUser.uid}`);
       await setDoc(checkinRef, {
         spotId: spot.id,
@@ -144,12 +160,12 @@ function showSpotDetails(spot) {
         userName: currentUser.displayName,
         timestamp: serverTimestamp()
       });
-      alert(`Success! You checked into \${spot.name}`);
+      showToast(`Success! You checked into \${spot.name}`, true);
     } catch (error) {
       if (error.code === 'permission-denied' || error.message.includes('API key not valid')) {
-        alert('Firebase not configured. Setup Firestore rules and add your API keys to config.js.');
+        showToast('Firebase DB missing permission. Update rules in console.');
       } else {
-        alert("Error checking in: " + error.message);
+        showToast("Error checking in: " + error.message);
       }
     }
   });
