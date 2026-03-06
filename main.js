@@ -19,7 +19,7 @@ onAuthStateChanged(auth, (user) => {
     
     // Safely handle display names for CJK characters or missing names
     const displayName = user.displayName || (user.email ? user.email.split('@')[0] : 'Driver');
-    userNameSpan.textContent = `Hello, \${displayName.split(' ')[0]}`;
+    userNameSpan.textContent = `Hello, ${displayName.split(' ')[0]}`;
   } else {
     currentUser = null;
     loginBtn.classList.remove('hidden');
@@ -48,7 +48,7 @@ loginBtn.addEventListener('click', async () => {
     } else if (error.code === 'auth/unauthorized-domain') {
       showToast('Domain not authorized. Please add this URL in Firebase Console settings.');
     } else if (error.message) {
-      showToast(`Login Failed: \${error.message}`);
+      showToast(`Login Failed: ${error.message}`);
     } else {
       showToast('Login Failed. Please check console for details.');
       console.error(error);
@@ -90,7 +90,7 @@ function renderMarkers(filterType = 'all') {
   locations.forEach(spot => {
     if (filterType !== 'all' && spot.type !== filterType) return;
 
-    const iconHtml = `<div class="marker-pin \${spot.type}"></div>`;
+    const iconHtml = `<div class="marker-pin ${spot.type}"></div>`;
     const customIcon = L.divIcon({
       className: 'custom-marker',
       html: iconHtml,
@@ -116,20 +116,20 @@ function showSpotDetails(spot) {
 
   spotDetailsContainer.innerHTML = `
     <div style="border-bottom: 1px solid rgba(0,0,0,0.08); padding-bottom: 12px; margin-bottom: 12px;">
-      <div class="spot-title">\${spot.name}</div>
-      <div class="spot-type" style="background: \${typeColor}; color: \${textColor};">
-        \${spot.type}
+      <div class="spot-title">${spot.name}</div>
+      <div class="spot-type" style="background: ${typeColor}; color: ${textColor};">
+        ${spot.type}
       </div>
     </div>
     <div class="spot-info">
       <div style="width: 100%; height: 160px; border-radius: 12px; overflow: hidden; margin-bottom: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
         <!-- Using high quality curated unspash architecture/car matches to prevent 404s -->
-        <img src="\${spot.image}" alt="\${spot.name}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='https://images.unsplash.com/photo-1511527661048-7fe73d85e9a4?auto=format&fit=crop&q=80&w=400&h=250'" />
+        <img src="${spot.image}" alt="${spot.name}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='https://images.unsplash.com/photo-1511527661048-7fe73d85e9a4?auto=format&fit=crop&q=80&w=400&h=250'" />
       </div>
-      <div><strong>Address:</strong> \${spot.address}</div>
-      <div><strong>Parking:</strong> \${spot.parking}</div>
+      <div><strong>Address:</strong> ${spot.address}</div>
+      <div><strong>Parking:</strong> ${spot.parking}</div>
       <div style="margin-top: 4px; border-left: 3px solid var(--accent-color); padding-left: 10px; font-style: italic; color: var(--text-secondary); background: rgba(0,0,0,0.02); padding-top: 6px; padding-bottom: 6px;">
-        "\${spot.vibe}"
+        "${spot.vibe}"
       </div>
       <button id="checkin-btn" class="filter-btn" style="margin-top: 14px; width: 100%; background: #2ed573; color: #fff; border: none; font-size: 0.9rem; padding: 10px;">
         Verify Location & Check-in
@@ -152,7 +152,7 @@ function showSpotDetails(spot) {
     }
     
     try {
-      const checkinRef = doc(db, 'checkins', `\${spot.id}_\${currentUser.uid}`);
+      const checkinRef = doc(db, 'checkins', `${spot.id}_${currentUser.uid}`);
       await setDoc(checkinRef, {
         spotId: spot.id,
         spotName: spot.name,
@@ -160,7 +160,7 @@ function showSpotDetails(spot) {
         userName: currentUser.displayName,
         timestamp: serverTimestamp()
       });
-      showToast(`Success! You checked into \${spot.name}`, true);
+      showToast(`Success! You checked into ${spot.name}`, true);
     } catch (error) {
       if (error.code === 'permission-denied' || error.message.includes('API key not valid')) {
         showToast('Firebase DB missing permission. Update rules in console.');
